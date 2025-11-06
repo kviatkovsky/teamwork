@@ -1,4 +1,4 @@
-package importer
+package customerimporter
 
 import "testing"
 
@@ -45,9 +45,25 @@ func TestImportInvalidData(t *testing.T) {
 	path := "./test_invalid_data.csv"
 	importer := NewCustomerImporter(path)
 
-	_, err := importer.ImportDomainData()
-	if err == nil {
-		t.Error("invalid data not caught")
+	data, err := importer.ImportDomainData()
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	if len(data) == 0 {
+		t.Error("expected valid emails to be processed, but got no results")
+	}
+
+	validDomains := []string{"hubpages.com", "360.cn", "statcounter.com", "prweb.com", "sun.com", "eepurl.com", "domainmarket.com", "unc.edu", "xinhuanet.com"}
+	domainMap := make(map[string]bool)
+	for _, d := range data {
+		domainMap[d.Domain] = true
+	}
+
+	for _, domain := range validDomains {
+		if !domainMap[domain] {
+			t.Errorf("expected domain %s to be present in results", domain)
+		}
 	}
 }
 

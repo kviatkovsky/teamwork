@@ -2,14 +2,15 @@ package exporter
 
 import (
 	"bytes"
-	"importer/importer"
+	customerimporter "importer/importer"
 	"os"
+	"strings"
 	"testing"
 )
 
 func TestExportData(t *testing.T) {
 	buff := &bytes.Buffer{}
-	data := []importer.DomainData{
+	data := []customerimporter.DomainData{
 		{
 			Domain:           "livejournal.com",
 			CustomerQuantity: 12,
@@ -38,8 +39,17 @@ func TestExportData(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if len(buff.String()) == 0 {
+	output := buff.String()
+	if len(output) == 0 {
 		t.Fatal("no data written to buffer")
+	}
+
+	if !strings.Contains(output, "domain") || !strings.Contains(output, "count") {
+		t.Error("CSV header not found in output")
+	}
+
+	if !strings.Contains(output, "livejournal.com") || !strings.Contains(output, "12") {
+		t.Error("expected data not found in output")
 	}
 }
 
@@ -64,8 +74,8 @@ func BenchmarkImportDomainData(b *testing.B) {
 	}
 
 	dataPath := "../importer/benchmark10k.csv"
-	importer := importer.NewCustomerImporter(dataPath)
-	data, err := importer.ImportDomainData()
+	imp := customerimporter.NewCustomerImporter(dataPath)
+	data, err := imp.ImportDomainData()
 	if err != nil {
 		b.Error(err)
 	}

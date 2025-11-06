@@ -1,7 +1,9 @@
 package exporter
 
 import (
-	"importer/importer"
+	"encoding/csv"
+	"fmt"
+	customerimporter "importer/importer"
 	"io"
 )
 
@@ -17,8 +19,27 @@ func NewCustomerExporter(output io.Writer) *CustomerExporter {
 	}
 }
 
-// ExportData writes sorted customer domain data to a CSV file. If file already
-// exists, it should be truncated.
-func (ex CustomerExporter) ExportData(data []importer.DomainData) error {
+func (ex *CustomerExporter) ExportData(data []customerimporter.DomainData) error {
+	if data == nil {
+		return fmt.Errorf("data cannot be nil")
+	}
+
+	writer := csv.NewWriter(ex.output)
+	defer writer.Flush()
+
+	if err := writer.Write([]string{"domain", "count"}); err != nil {
+		return fmt.Errorf("failed to write CSV header: %w", err)
+	}
+
+	for _, domainData := range data {
+		record := []string{
+			domainData.Domain,
+			fmt.Sprintf("%d", domainData.CustomerQuantity),
+		}
+		if err := writer.Write(record); err != nil {
+			return fmt.Errorf("failed to write CSV record: %w", err)
+		}
+	}
+
 	return nil
 }
